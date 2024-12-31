@@ -1,82 +1,106 @@
 import argv
-import clip
-import clip/arg
-import clip/help
-import clip/opt
+import gleam/result
+import simplifile
+
 import gleam/io
 import gleam/string
 
-type Args {
-  Args(cmd: Command, day: Int, part: Int)
+import cli.{type Part, Create, One, Run, Test, Two}
+import get_aoc_input.{day_dirname, get_aoc_input}
+
+import day_01/part1 as day1part1
+import day_01/part2 as day1part2
+
+pub type Error {
+  CopyTemplateError(simplifile.FileError)
+  ReadInputError(simplifile.FileError)
+  DayExistsError
+  AocInputError(get_aoc_input.Error)
+  ExampleError(#(String, String))
+  NoDayError
 }
 
-type Command {
-  Run
-  Create
-  Test
+fn copy_template_files(day: Int) -> Result(Nil, Error) {
+  let path = "src/" <> day_dirname(day)
+  let template_dir = "./daily_template"
+  case simplifile.is_directory(path) {
+    // If the directory already exists, don't reset it
+    Ok(True) -> Error(DayExistsError)
+    // Try copying the template files
+    Ok(False) ->
+      simplifile.copy_directory(template_dir, path)
+      |> result.map_error(CopyTemplateError)
+    Error(e) -> Error(CopyTemplateError(e))
+  }
 }
 
-fn cmd_arg() {
-  arg.new("cmd")
-  |> arg.help("Command")
-  |> arg.optional
-  |> arg.try_map(fn(cmd) {
-    case cmd {
-      Ok("run") -> Ok(Run)
-      Ok("create") -> Ok(Create)
-      Ok("test") -> Ok(Test)
-      _ -> Error("Command must be 'create', 'run', or 'test'")
+fn create_day_puzzle(day: Int) -> Result(Nil, Error) {
+  copy_template_files(day)
+  |> result.then(fn(_) { get_aoc_input(day) |> result.map_error(AocInputError) })
+}
+
+fn part_example(
+  part: Part,
+  part1: fn() -> Result(String, #(String, String)),
+  part2: fn() -> Result(String, #(String, String)),
+) -> Result(String, Error) {
+  case part {
+    One -> part1() |> result.map_error(ExampleError)
+    Two -> part2() |> result.map_error(ExampleError)
+  }
+}
+
+fn test_day_example(day: Int, part: Part) -> Result(String, Error) {
+  case day {
+    1 -> part_example(part, day1part1.example, day1part2.example)
+    _ -> Error(NoDayError)
+  }
+}
+
+fn part_process(
+  day: String,
+  part: Part,
+  part1: fn(String) -> String,
+  part2: fn(String) -> String,
+) -> Result(String, Error) {
+  case part {
+    One -> {
+      use data <- result.try(
+        simplifile.read("src/" <> day <> "/input1.txt")
+        |> result.map_error(ReadInputError),
+      )
+      Ok(part1(data))
     }
-  })
-}
-
-fn day_opt() {
-  opt.new("day")
-  |> opt.short("d")
-  |> opt.help("Day")
-  |> opt.int
-  |> opt.try_map(fn(day) {
-    case day > 0 && day <= 25 {
-      True -> Ok(day)
-      False -> Error("Day must be between 1 and 25")
+    Two -> {
+      use data <- result.try(
+        simplifile.read("src/" <> day <> "/input2.txt")
+        |> result.map_error(ReadInputError),
+      )
+      Ok(part2(data))
     }
-  })
+  }
 }
 
-fn part_opt() {
-  opt.new("part")
-  |> opt.short("p")
-  |> opt.help("Part")
-  |> opt.int
-  |> opt.try_map(fn(part) {
-    case part > 0 && part <= 2 {
-      True -> Ok(part)
-      False -> Error("part must be 1 or 2")
-    }
-  })
-}
-
-fn command() {
-  clip.command({
-    use cmd <- clip.parameter
-    use day <- clip.parameter
-    use part <- clip.parameter
-
-    Args(cmd, day, part)
-  })
-  |> clip.arg(cmd_arg())
-  |> clip.opt(day_opt())
-  |> clip.opt(part_opt())
+fn run_day_process(day: Int, part: Part) -> Result(String, Error) {
+  case day {
+    1 ->
+      part_process(day_dirname(day), part, day1part1.process, day1part2.process)
+    _ -> Error(NoDayError)
+  }
 }
 
 pub fn main() {
-  let result =
-    command()
-    |> clip.help(help.simple("aoc", "run aoc commands"))
-    |> clip.run(argv.load().arguments)
+  let result = cli.cli_command(argv.load().arguments)
 
   case result {
     Error(e) -> io.println_error(e)
-    Ok(aoc) -> aoc |> string.inspect |> io.println
+    Ok(aoc) ->
+      case aoc {
+        Create(day) -> create_day_puzzle(day) |> string.inspect |> io.println
+        Test(day, part) ->
+          test_day_example(day, part) |> string.inspect |> io.println
+        Run(day, part) ->
+          run_day_process(day, part) |> string.inspect |> io.println
+      }
   }
 }

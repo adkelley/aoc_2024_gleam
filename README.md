@@ -19,9 +19,11 @@ gleam run -- test -d x -p y
 gleam run -- run -d x -p y
 ```
 
+Running `gleam test` will test the cli integration. Also, using the example data, it will test part1 and part2 puzzles for each day.
+
 ## Downloadng your Advent of Code puzzle data
 
-When you create a day, this program will download your puzzle data from the advent of code website, and write it to `day_XX/inputY.txt` where `XX` is 1-25, and `Y` is 1 or 2.   But first, you'll need to access your AOC session cookie, and assign it to the environment variable `ADVENT_OF_CODE_SESSION_COOKIE`.
+When you create a day, this program will download your puzzle data from the advent of code website, and write it to `day_XX/inputY.txt` where `XX` is 1-25, and `Y` is 1 and 2.   But first, you'll need to access your AOC session cookie, and assign it to the environment variable `ADVENT_OF_CODE_SESSION_COOKIE`.
 
 You can find SESSION by using Chrome tools:
 1) Go to https://adventofcode.com/2022/day/1/input
@@ -36,3 +38,9 @@ That is:
 ```shell
 export ADVENT_OF_CODE_SESSION_COOKIE=value
 ```
+
+## Credits
+
+Inspired by:
+- [Chris Biscardi](https://github.com/ChristopherBiscardi/advent-of-code/tree/main) advent-of-code template in Rust.
+- [@tiborpilz](https://hexdocs.pm/aoc_2024/index.html) the github workflow for testing the cli. 

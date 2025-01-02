@@ -50,6 +50,7 @@ fn part_example(
   }
 }
 
+// Test your solution against AOC example data
 fn test_day_example(day: Int, part: Part) -> Result(String, Error) {
   case day {
     1 -> part_example(part, day1part1.example, day1part2.example)
@@ -81,6 +82,7 @@ fn part_process(
   }
 }
 
+// Run your solution against AOC data
 fn run_day_process(day: Int, part: Part) -> Result(String, Error) {
   case day {
     1 ->

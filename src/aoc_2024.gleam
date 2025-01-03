@@ -10,6 +10,8 @@ import get_aoc_input.{day_dirname, get_aoc_input}
 
 import day_01/part1 as day1part1
 import day_01/part2 as day1part2
+import day_02/part1 as day2part1
+import day_02/part2 as day2part2
 
 pub type Error {
   CopyTemplateError(simplifile.FileError)
@@ -54,6 +56,7 @@ fn part_example(
 fn test_day_example(day: Int, part: Part) -> Result(String, Error) {
   case day {
     1 -> part_example(part, day1part1.example, day1part2.example)
+    2 -> part_example(part, day2part1.example, day2part2.example)
     _ -> Error(NoDayError)
   }
 }
@@ -87,6 +90,8 @@ fn run_day_process(day: Int, part: Part) -> Result(String, Error) {
   case day {
     1 ->
       part_process(day_dirname(day), part, day1part1.process, day1part2.process)
+    2 ->
+      part_process(day_dirname(day), part, day2part1.process, day2part2.process)
     _ -> Error(NoDayError)
   }
 }

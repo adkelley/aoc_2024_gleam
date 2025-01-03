@@ -1,8 +1,6 @@
-import gleam/function
 import gleam/int
 import gleam/list
 import gleam/regexp
-import gleam/result
 import gleam/string
 
 fn lines(str: String) -> List(String) {
@@ -15,31 +13,25 @@ fn parse_line(input: String) -> List(Int) {
   let assert Ok(re) = regexp.from_string("\\s+")
 
   regexp.split(with: re, content: string.trim_end(input))
-  |> list.map(fn(x) { result.unwrap(int.parse(x), 0) })
+  |> list.filter_map(int.parse)
 }
 
-fn satisfies_range(pairs: List(#(Int, Int))) -> Bool {
-  list.map(pairs, fn(x) { int.absolute_value(x.1 - x.0) })
-  |> list.all(fn(x) { x > 0 && x < 4 })
-}
-
-fn is_monotonic(pairs: List(#(Int, Int))) -> Bool {
-  list.map(pairs, fn(x) { x.1 - x.0 })
-  |> fn(xs) { list.all(xs, fn(x) { x < 0 }) || list.all(xs, fn(x) { x > 0 }) }
-}
-
-fn is_safe(levels: List(Int)) -> Bool {
-  list.window_by_2(levels)
-  |> fn(pairs) { is_monotonic(pairs) && satisfies_range(pairs) }
+fn is_safe(report: List(Int)) -> Bool {
+  list.window_by_2(report)
+  |> fn(levels) {
+    let diffs = list.map(levels, fn(t) { t.0 - t.1 })
+    let all_increasing = list.all(diffs, fn(x) { x < 0 && x > -4 })
+    let all_decreasing = list.all(diffs, fn(x) { x > 0 && x < 4 })
+    all_increasing || all_decreasing
+  }
 }
 
 pub fn process(input: String) -> String {
   lines(input)
   |> list.map(parse_line)
-  |> list.map(is_safe)
-  |> list.filter(function.identity)
-  |> list.length()
-  |> int.to_string()
+  |> list.filter(is_safe)
+  |> list.length
+  |> int.to_string
 }
 
 pub fn example() -> Result(String, #(String, String)) {
